@@ -13,7 +13,7 @@ class AvhrrSimpleSstTest(unittest.TestCase):
         self.avhrr_sst = AvhrrSimpleSST()
 
 
-    def testProcess(self):
+    def test_process(self):
         dataset = xr.Dataset()
 
         ch4_data = np.asarray([[1089, 793], [1204, 224], [1204, 155]]) * 0.01
@@ -33,5 +33,5 @@ class AvhrrSimpleSstTest(unittest.TestCase):
         self.assertAlmostEqual(16.293227504189915, result.data[1, 0])
         self.assertAlmostEqual(4.307602271167589, result.data[2, 1])
 
-    def testGetName(self):
-        self.assertEqual("AVHRR_SST_SIMPLE", self.avhrr_sst.getName())
+    def test_get_name(self):
+        self.assertEqual("AVHRR_SST_SIMPLE", self.avhrr_sst.get_name())

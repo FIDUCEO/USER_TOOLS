@@ -12,5 +12,6 @@ class AvhrrNaiveSST:
 
         return Variable(ch4_variable.dims, sst)
 
-    def getName(self):
+    @staticmethod
+    def get_name():
         return "AVHRR_SST_NAIVE"

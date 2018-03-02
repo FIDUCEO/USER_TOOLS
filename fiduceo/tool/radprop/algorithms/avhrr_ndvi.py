@@ -1,5 +1,6 @@
 from xarray import Variable
 
+
 class AvhrrNDVI:
 
     def process(self, dataset):
@@ -11,5 +12,6 @@ class AvhrrNDVI:
 
         return Variable(ch1_variable.dims, ndvi)
 
-    def getName(self):
+    @staticmethod
+    def get_name():
         return "AVHRR_NDVI"
