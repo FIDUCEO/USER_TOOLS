@@ -9,7 +9,7 @@ from fiduceo.tool.radprop.algorithms.avhrr_ndvi import AvhrrNDVI
 
 class AvhrrNdviTest(unittest.TestCase):
 
-    def testCalculate(self):
+    def testProcess(self):
         dataset = xr.Dataset()
 
         ch1_data = np.asarray([[1195, 1228], [902, 1747], [902, 1848]]) * 1e-4
