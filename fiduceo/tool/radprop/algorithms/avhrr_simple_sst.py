@@ -13,3 +13,6 @@ class AvhrrSimpleSST:
         sst = ch4_data + 1.0 / np.cos(sza_data) * (ch4_data - ch5_data) + 1.0
 
         return Variable(ch4_variable.dims, sst)
+
+    def getName(self):
+        return "AVHRR_SST_SIMPLE"

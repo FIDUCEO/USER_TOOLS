@@ -9,6 +9,10 @@ from fiduceo.tool.radprop.algorithms.avhrr_simple_sst import AvhrrSimpleSST
 
 class AvhrrSimpleSstTest(unittest.TestCase):
 
+    def setUp(self):
+        self.avhrr_sst = AvhrrSimpleSST()
+
+
     def testProcess(self):
         dataset = xr.Dataset()
 
@@ -21,11 +25,13 @@ class AvhrrSimpleSstTest(unittest.TestCase):
         sat_za_data = np.asarray([[6871, 6825], [6871, 6825], [6871, 6825]]) * 0.01
         dataset["satellite_zenith_angle"] = Variable(["y", "x"], sat_za_data)
 
-        avhrr_sst = AvhrrSimpleSST()
-        result = avhrr_sst.process(dataset)
+        result = self.avhrr_sst.process(dataset)
 
         self.assertIsNotNone(result)
 
         self.assertAlmostEqual(12.36811672342432, result.data[0, 1])
         self.assertAlmostEqual(16.293227504189915, result.data[1, 0])
         self.assertAlmostEqual(4.307602271167589, result.data[2, 1])
+
+    def testGetName(self):
+        self.assertEqual("AVHRR_SST_SIMPLE", self.avhrr_sst.getName())

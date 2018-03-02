@@ -1,5 +1,6 @@
 from xarray import Variable
 
+
 class AvhrrNaiveSST:
 
     def process(self, dataset):
@@ -10,3 +11,6 @@ class AvhrrNaiveSST:
         sst = 2.0 * ch4_data - ch5_data + 1.0
 
         return Variable(ch4_variable.dims, sst)
+
+    def getName(self):
+        return "AVHRR_SST_NAIVE"

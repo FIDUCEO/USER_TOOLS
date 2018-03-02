@@ -9,6 +9,9 @@ from fiduceo.tool.radprop.algorithms.avhrr_ndvi import AvhrrNDVI
 
 class AvhrrNdviTest(unittest.TestCase):
 
+    def setUp(self):
+        self.avhrr_ndvi = AvhrrNDVI()
+
     def testProcess(self):
         dataset = xr.Dataset()
 
@@ -18,10 +21,12 @@ class AvhrrNdviTest(unittest.TestCase):
         ch2_data = np.asarray([[886, 946], [608, 1514], [596, 1634]]) * 1e-4
         dataset["Ch2_Ref"] = Variable(["y", "x"], ch2_data)
 
-        avhrr_ndvi = AvhrrNDVI()
-        result = avhrr_ndvi.process(dataset)
+        result = self.avhrr_ndvi.process(dataset)
         self.assertIsNotNone(result)
 
         self.assertAlmostEqual(-0.14848630466122062, result.data[0, 0])
         self.assertAlmostEqual(-0.071450475314320791, result.data[1, 1])
         self.assertAlmostEqual(-0.20427236315086786, result.data[2, 0])
+
+    def testGetName(self):
+        self.assertEqual("AVHRR_NDVI", self.avhrr_ndvi.getName())

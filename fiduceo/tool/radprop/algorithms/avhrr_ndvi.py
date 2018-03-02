@@ -10,3 +10,6 @@ class AvhrrNDVI:
         ndvi = (ch2_data - ch1_data) / (ch2_data + ch1_data)
 
         return Variable(ch1_variable.dims, ndvi)
+
+    def getName(self):
+        return "AVHRR_NDVI"
