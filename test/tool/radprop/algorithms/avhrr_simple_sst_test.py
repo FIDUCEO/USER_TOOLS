@@ -29,9 +29,9 @@ class AvhrrSimpleSstTest(unittest.TestCase):
 
         self.assertIsNotNone(result)
 
-        self.assertAlmostEqual(12.36811672342432, result.data[0, 1])
-        self.assertAlmostEqual(16.293227504189915, result.data[1, 0])
-        self.assertAlmostEqual(4.307602271167589, result.data[2, 1])
+        self.assertAlmostEqual(14.94796044085826, result.data[0, 1])
+        self.assertAlmostEqual(21.274904327787702, result.data[1, 0])
+        self.assertAlmostEqual(5.6264461446539977, result.data[2, 1])
 
     def test_get_name(self):
         self.assertEqual("AVHRR_SST_SIMPLE", self.avhrr_sst.get_name())
