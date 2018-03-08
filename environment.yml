@@ -10,7 +10,6 @@ dependencies:
   - coverage >= 4.4
   - dask >= 0.15.2
   - netcdf4 >=1.2
-  - numexpr >=2.6.2
   - numpy >=1.11
   - xarray >=0.8.2
   #

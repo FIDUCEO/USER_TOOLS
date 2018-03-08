@@ -23,9 +23,9 @@ install:
 
   - conda env create --file environment.yml
   - source activate fiduceo-user-tools-env
-  - python setup.py install
 
 script:
+  - python setup.py install
   - python -m unittest discover  -p "*_test.py"
   - coverage run -m unittest discover  -p "*_test.py"
 
