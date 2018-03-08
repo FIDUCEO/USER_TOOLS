@@ -21,4 +21,15 @@ setup(name='fiduceo_user_tools',
           'console_scripts': [
               'fiduceo-radprop = fiduceo.tool.radprop.cli.main:main',
           ],
+          'fiduceo_user_tools_plugins': [
+              #
+              # The following internal plugins are for unit-testing only:
+              #
+              # _test_plugin_1 does nothing
+              'test1 = fiduceo.tool.plugin:test_plugin_1',
+              # _test_plugin_2 raises
+              'test2 = fiduceo.tool.plugin:test_plugin_2',
+              # _test_plugin_3 does not exist
+              'test3 = fiduceo.tool.plugin:test_plugin_3',
+          ],
       })
