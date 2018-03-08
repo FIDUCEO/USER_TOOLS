@@ -21,3 +21,10 @@ class RadPropCliTest(unittest.TestCase):
                          "usage: fiduceo-radprop [-h] [-v] [--traceback] [--license] [--docs]\n"
                          "                       [-i INPUT_FILE]\n"
                          "fiduceo-radprop: error: argument -i/--input_file: expected one argument\n\n")
+
+    def test_main_license(self):
+        with fetch_std_streams() as (stdout, stderr):
+            status = main(['--license'])
+        self.assertEqual(status, 0)
+        self.assertTrue("GNU GENERAL PUBLIC LICENSE" in stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
