@@ -15,11 +15,15 @@ class RadPropProcessor():
     def run(self, args):
         cmd_line_args = self._parse_cmd_line(args)
 
-        dataset = xr.open_dataset(cmd_line_args.input_file, chunks=1024*1024)
+        dataset = xr.open_dataset(cmd_line_args.input_file, chunks=1024 * 1024)
 
         algorithm = self._algorithm_factory.get_algorithm(cmd_line_args.algorithm)
+
         # @todo 1 tb/tb check variables 2018-03-06
+
         target_variable = algorithm.process(dataset)
+        # only for TensorFlow tests tb 2018-03-15
+        #  target_variable = algorithm.process_tf(dataset)
 
         target_dataset = xr.Dataset()
         target_dataset[cmd_line_args.algorithm] = target_variable
@@ -67,4 +71,4 @@ class RadPropProcessor():
         (head, file_name) = os.path.split(source_file_name)
         (prefix, extension) = os.path.splitext(file_name)
 
-        return prefix +"_" + algorithm_name + extension
+        return prefix + "_" + algorithm_name + extension

@@ -22,11 +22,11 @@ class RadPropProcessorIOTest(unittest.TestCase):
 
         output_dir = TestDataUtils.get_output_dir()
 
-        cmd_line_args = ["-o", output_dir, "-a", "AVHRR_SST_SIMPLE", test_file]
+        cmd_line_args = ["-o", output_dir, "-a", "AVHRR_SST_NAIVE", test_file]
 
         processor = RadPropProcessor()
 
         processor.run(cmd_line_args)
 
-        self.target_file = os.path.join(output_dir, "FIDUCEO_FCDR_L1C_AVHRR_NOAA11_19920704103249_19920704121448_EASY_v0.4pre_fv1.1.1_AVHRR_SST_SIMPLE.nc")
+        self.target_file = os.path.join(output_dir, "FIDUCEO_FCDR_L1C_AVHRR_NOAA11_19920704103249_19920704121448_EASY_v0.4pre_fv1.1.1_AVHRR_SST_NAIVE.nc")
         self.assertTrue(os.path.isfile(self.target_file))

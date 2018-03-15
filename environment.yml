@@ -12,6 +12,7 @@ dependencies:
   - netcdf4 >=1.2
   - numpy >=1.11
   - xarray >=0.8.2
+  - tensorflow>=1.6
   #
   # for testing only
   #
