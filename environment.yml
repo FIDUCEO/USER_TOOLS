@@ -11,8 +11,8 @@ dependencies:
   - dask >= 0.15.2
   - netcdf4 >=1.2
   - numpy >=1.11
+  # - tensorflow >= 1.6
   - xarray >=0.8.2
-  - tensorflow>=1.6
   #
   # for testing only
   #
