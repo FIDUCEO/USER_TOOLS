@@ -93,18 +93,14 @@ def _new_argument_parser(cli_config):
     """
     name, version, description = cli_config['name'], cli_config['version'], cli_config['description']
 
-    parser = _NoExitArgumentParser(prog=name,
-                                   description='%s, version %s' % (description, version))
+    parser = _NoExitArgumentParser(prog=name, description='%s, version %s' % (description, version))
 
     parser.add_argument('-v', '--version', action='version', version='%s %s' % (name, version))
-    parser.add_argument('--traceback', action='store_true',
-                        help='show (Python) stack traceback for the last error')
+    parser.add_argument('--traceback', action='store_true', help='show (Python) stack traceback for the last error')
     if 'license_text' in cli_config:
-        parser.add_argument('--license', action='store_true',
-                            help='show software license and exit')
+        parser.add_argument('--license', action='store_true', help='show software license and exit')
     if 'docs_url' in cli_config:
-        parser.add_argument('--docs', action='store_true',
-                            help='show software documentation in a browser window')
+        parser.add_argument('--docs', action='store_true', help='show software documentation in a browser window')
 
     return parser
 
