@@ -19,8 +19,6 @@ class RadPropProcessor():
         # @todo 1 tb/tb check variables 2018-03-06
 
         target_variable = algorithm.process(dataset)
-        # only for TensorFlow tests tb 2018-03-15
-        #  target_variable = algorithm.process_tf(dataset)
 
         target_dataset = xr.Dataset()
         target_dataset[cmd_line_args.algorithm] = target_variable
