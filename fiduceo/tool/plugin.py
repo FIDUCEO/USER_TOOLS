@@ -1,9 +1,12 @@
 import pkg_resources
 import sys
 import traceback
+import warnings
 
 ENTRY_POINTS_GROUP = "fiduceo_user_tools_plugins"
 
+class PluginWarning(RuntimeWarning):
+    pass
 
 def get_plugins():
     return dict(_PLUGIN_REGISTRY)
@@ -36,8 +39,11 @@ def _load_plugins():
                                    'error loading plugin from '
                                    'entry point "{name}" of group "{group}"')
 
-        # Here: generate a JSON-serializable plugin entry
+        if problem:
+            warnings.warn("{plugin}: {message}".format(plugin=entry_point.name, message=problem["message"]), PluginWarning)
+
         plugins[entry_point.name] = dict(name=entry_point.name,
+        # Here: generate a JSON-serializable plugin entry
                                          module_name=entry_point.module_name,
                                          attrs=entry_point.attrs,
                                          dist=entry_point.dist,
