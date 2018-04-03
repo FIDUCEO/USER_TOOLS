@@ -16,10 +16,10 @@ class AvhrrNdviTest(unittest.TestCase):
         dataset = xr.Dataset()
 
         ch1_data = np.asarray([[1195, 1228], [902, 1747], [902, 1848]]) * 1e-4
-        dataset["Ch1_Ref"] = Variable(["y", "x"], ch1_data)
+        dataset["Ch1"] = Variable(["y", "x"], ch1_data)
 
         ch2_data = np.asarray([[886, 946], [608, 1514], [596, 1634]]) * 1e-4
-        dataset["Ch2_Ref"] = Variable(["y", "x"], ch2_data)
+        dataset["Ch2"] = Variable(["y", "x"], ch2_data)
 
         result = self.avhrr_ndvi.process(dataset)
         self.assertIsNotNone(result)
@@ -30,3 +30,8 @@ class AvhrrNdviTest(unittest.TestCase):
 
     def test_get_name(self):
         self.assertEqual("AVHRR_NDVI", self.avhrr_ndvi.get_name())
+
+    def test_get_variables_names(self):
+        variable_names = self.avhrr_ndvi.get_variable_names()
+        self.assertTrue("Ch1" in variable_names)
+        self.assertTrue("Ch2" in variable_names)

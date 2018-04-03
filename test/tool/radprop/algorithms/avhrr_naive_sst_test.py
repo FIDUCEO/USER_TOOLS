@@ -16,10 +16,10 @@ class AvhrrNaiveSstTest(unittest.TestCase):
         dataset = xr.Dataset()
 
         ch4_data = np.asarray([[1089, 793], [1204, 224], [1204, 155]]) * 0.01
-        dataset["Ch4_Bt"] = Variable(["y", "x"], ch4_data)
+        dataset["Ch4"] = Variable(["y", "x"], ch4_data)
 
         ch5_data = np.asarray([[779, 570], [905, 93], [904, 41]]) * 0.01
-        dataset["Ch5_Bt"] = Variable(["y", "x"], ch5_data)
+        dataset["Ch5"] = Variable(["y", "x"], ch5_data)
 
         result = self.avhrr_sst.process(dataset)
 
@@ -30,3 +30,8 @@ class AvhrrNaiveSstTest(unittest.TestCase):
 
     def test_get_name(self):
         self.assertEqual("AVHRR_SST_NAIVE", self.avhrr_sst.get_name())
+
+    def test_get_variables_names(self):
+        variable_names = self.avhrr_sst.get_variable_names()
+        self.assertTrue("Ch4" in variable_names)
+        self.assertTrue("Ch5" in variable_names)
