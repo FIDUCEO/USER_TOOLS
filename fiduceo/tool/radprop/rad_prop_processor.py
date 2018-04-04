@@ -87,25 +87,42 @@ class RadPropProcessor():
 
         return prefix + "_" + algorithm_name + extension
 
-    # @todo 1 tb/tb write tests 2018-04-03
-    def _calculate_radiance_disturbances(self, dataset, variable_names):
+    @staticmethod
+    def _calculate_radiance_disturbances(dataset, variable_names):
         disturbances = dict()
 
+        y = dataset.dims["y"]
+        x = dataset.dims["x"]
         for variable_name in variable_names:
-            u_ind = None
             u_ind_name = "u_independent_" + variable_name
+
+            u_ind = None
             if u_ind_name in dataset:
                 u_ind = dataset[u_ind_name].data
 
-            u_str = None
             u_str_name = "u_structured_" + variable_name
+            u_str = None
             if u_str_name in dataset:
                 u_str = dataset[u_str_name].data
 
-            if u_ind is None or u_str is None:
-                continue
+            u_com_name = "u_common_" + variable_name
+            u_com = None
+            if u_com_name in dataset:
+                u_com = dataset[u_com_name].data
 
-            rad_delta = np.sqrt(u_ind * u_ind + u_str * u_str)
+            if u_str is None and u_ind is None and u_com is None:
+                continue    # if no uncertainty can be found we skip this variable from calculation tb 2018-04-04
+
+            if u_ind is None:
+                u_ind = np.zeros([y, x])
+
+            if u_str is None:
+                u_str = np.zeros([y, x])
+
+            if u_com is None:
+                u_com = np.zeros([y, x])
+
+            rad_delta = np.sqrt(u_ind * u_ind + u_str * u_str + u_com * u_com)
             disturbances.update({variable_name : rad_delta})
 
         return disturbances
