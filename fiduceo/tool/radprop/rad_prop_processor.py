@@ -29,7 +29,6 @@ class RadPropProcessor():
         z1 = algorithm.process(disturbed_dataset)
 
         sens_coeff = (z2 - z1) * 0.5
-        print(sens_coeff[0, 0])
 
         target_variable = algorithm.process(dataset)
 
@@ -86,4 +85,3 @@ class RadPropProcessor():
         (prefix, extension) = os.path.splitext(file_name)
 
         return prefix + "_" + algorithm_name + extension
-    
