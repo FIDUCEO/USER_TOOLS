@@ -1,16 +1,17 @@
 import os
 
-import numpy as np
 import xarray as xr
 from xarray import Variable
 
 from fiduceo.tool.radprop.algorithms.algorithm_factory import AlgorithmFactory
+from fiduceo.tool.radprop.radiance_disturbances import RadianceDisturbances
 
 
 class RadPropProcessor():
 
     def __init__(self):
         self._algorithm_factory = AlgorithmFactory()
+        self._rad_disturbance_proc = RadianceDisturbances()
         self.input_file = None
 
     def run(self, cmd_line_args):
@@ -19,7 +20,7 @@ class RadPropProcessor():
         algorithm = self._algorithm_factory.get_algorithm(cmd_line_args.algorithm)
 
         variable_names = algorithm.get_variable_names()
-        disturbances = self._calculate_radiance_disturbances(dataset, variable_names)
+        disturbances = self._rad_disturbance_proc.calculate(dataset, variable_names)
 
         disturbed_dataset = self.calculate_positive_disturbed_dataset(dataset, disturbances, variable_names)
         z2 = algorithm.process(disturbed_dataset)
@@ -28,8 +29,7 @@ class RadPropProcessor():
         z1 = algorithm.process(disturbed_dataset)
 
         sens_coeff = (z2 - z1) * 0.5
-        print(sens_coeff[0,0])
-
+        print(sens_coeff[0, 0])
 
         target_variable = algorithm.process(dataset)
 
@@ -86,43 +86,4 @@ class RadPropProcessor():
         (prefix, extension) = os.path.splitext(file_name)
 
         return prefix + "_" + algorithm_name + extension
-
-    @staticmethod
-    def _calculate_radiance_disturbances(dataset, variable_names):
-        disturbances = dict()
-
-        y = dataset.dims["y"]
-        x = dataset.dims["x"]
-        for variable_name in variable_names:
-            u_ind_name = "u_independent_" + variable_name
-
-            u_ind = None
-            if u_ind_name in dataset:
-                u_ind = dataset[u_ind_name].data
-
-            u_str_name = "u_structured_" + variable_name
-            u_str = None
-            if u_str_name in dataset:
-                u_str = dataset[u_str_name].data
-
-            u_com_name = "u_common_" + variable_name
-            u_com = None
-            if u_com_name in dataset:
-                u_com = dataset[u_com_name].data
-
-            if u_str is None and u_ind is None and u_com is None:
-                continue    # if no uncertainty can be found we skip this variable from calculation tb 2018-04-04
-
-            if u_ind is None:
-                u_ind = np.zeros([y, x])
-
-            if u_str is None:
-                u_str = np.zeros([y, x])
-
-            if u_com is None:
-                u_com = np.zeros([y, x])
-
-            rad_delta = np.sqrt(u_ind * u_ind + u_str * u_str + u_com * u_com)
-            disturbances.update({variable_name : rad_delta})
-
-        return disturbances
+    

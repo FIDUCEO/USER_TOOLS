@@ -10,6 +10,9 @@ class AvhrrNDVI:
 
         self.ndvi = (self.ch_2 - self.ch_1) / (self.ch_2 + self.ch_1)
 
+        self.session = tf.Session()
+        self.session.run(tf.global_variables_initializer())  # this one was not obvious!!!
+
     # def process_standard(self, dataset):
     #     ch1_variable = dataset["Ch1"]
     #     ch1_data = ch1_variable.data
@@ -22,9 +25,7 @@ class AvhrrNDVI:
     def process(self, dataset):
         ch1_variable = dataset["Ch1"]
 
-        session = tf.Session()
-        session.run(tf.global_variables_initializer())  # this one was not obvious!!!
-        ndvi_data = session.run(self.ndvi, feed_dict={self.ch_1: dataset["Ch1"].data, self.ch_2: dataset["Ch2"].data})
+        ndvi_data = self.session.run(self.ndvi, feed_dict={self.ch_1: dataset["Ch1"].data, self.ch_2: dataset["Ch2"].data})
 
         return Variable(ch1_variable.dims, ndvi_data)
 

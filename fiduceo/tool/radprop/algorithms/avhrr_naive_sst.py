@@ -13,6 +13,9 @@ class AvhrrNaiveSST:
 
         self.sst = a * self.ch_4 - self.ch_5 + b
 
+        self.session = tf.Session()
+        self.session.run(tf.global_variables_initializer())  # this one was not obvious!!!
+
     # def process_standard(self, dataset):
     #     ch4_variable = dataset["Ch4"]
     #     ch4_data = ch4_variable.data
@@ -25,9 +28,7 @@ class AvhrrNaiveSST:
     def process(self, dataset):
         ch4_variable = dataset["Ch4"]
 
-        session = tf.Session()
-        session.run(tf.global_variables_initializer())  # this one was not obvious!!!
-        sst_data = session.run(self.sst, feed_dict={self.ch_4: dataset["Ch4"].data, self.ch_5: dataset["Ch5"].data})
+        sst_data = self.session.run(self.sst, feed_dict={self.ch_4: dataset["Ch4"].data, self.ch_5: dataset["Ch5"].data})
 
         return Variable(ch4_variable.dims, sst_data)
 
