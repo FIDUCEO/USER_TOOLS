@@ -1,5 +1,5 @@
-from xarray import Variable
 import tensorflow as tf
+from xarray import Variable
 
 
 class AvhrrNDVI:
@@ -12,15 +12,6 @@ class AvhrrNDVI:
 
         self.session = tf.Session()
         self.session.run(tf.global_variables_initializer())  # this one was not obvious!!!
-
-    # def process_standard(self, dataset):
-    #     ch1_variable = dataset["Ch1"]
-    #     ch1_data = ch1_variable.data
-    #     ch2_data = dataset["Ch2"].data
-    #
-    #     ndvi = (ch2_data - ch1_data) / (ch2_data + ch1_data)
-    #
-    #     return Variable(ch1_variable.dims, ndvi)
 
     def process(self, dataset):
         ch1_variable = dataset["Ch1"]

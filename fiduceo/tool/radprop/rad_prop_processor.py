@@ -5,6 +5,7 @@ from xarray import Variable
 
 from fiduceo.tool.radprop.algorithms.algorithm_factory import AlgorithmFactory
 from fiduceo.tool.radprop.radiance_disturbances import RadianceDisturbances
+from fiduceo.tool.radprop.sensitivity_calculator import SensitivityCalculator
 
 
 class RadPropProcessor():
@@ -19,16 +20,13 @@ class RadPropProcessor():
 
         algorithm = self._algorithm_factory.get_algorithm(cmd_line_args.algorithm)
 
+        # disturbances per channel
         variable_names = algorithm.get_variable_names()
         disturbances = self._rad_disturbance_proc.calculate(dataset, variable_names)
 
-        disturbed_dataset = self.calculate_positive_disturbed_dataset(dataset, disturbances, variable_names)
-        z2 = algorithm.process(disturbed_dataset)
-
-        disturbed_dataset = self.calculate_negative_disturbed_dataset(dataset, disturbances, variable_names)
-        z1 = algorithm.process(disturbed_dataset)
-
-        sens_coeff = (z2 - z1) * 0.5
+        # sensitivities per channel
+        sensitivity_calculator = SensitivityCalculator()
+        sensitivities = sensitivity_calculator.run(dataset, disturbances, algorithm)
 
         target_variable = algorithm.process(dataset)
 

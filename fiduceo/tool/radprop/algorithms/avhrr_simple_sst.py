@@ -18,17 +18,6 @@ class AvhrrSimpleSST:
         self.session = tf.Session()
         self.session.run(tf.global_variables_initializer())  # this one was not obvious!!!
 
-    # def process_standard(self, dataset):
-    #     ch4_variable = dataset["Ch4"]
-    #     ch4_data = ch4_variable.data
-    #     ch5_data = dataset["Ch5"].data
-    #     sza_data = dataset["satellite_zenith_angle"].data
-    #     sza_data_rad = sza_data * np.pi / 180.0
-    #
-    #     sst = ch4_data + 1.0 / np.cos(sza_data_rad) * (ch4_data - ch5_data) + 1.0
-    #
-    #     return Variable(ch4_variable.dims, sst)
-
     def process(self, dataset):
         ch4_variable = dataset["Ch4"]
 
