@@ -1,7 +1,6 @@
 import os
 
 import xarray as xr
-from xarray import Variable
 
 from fiduceo.tool.radprop.algorithms.algorithm_factory import AlgorithmFactory
 from fiduceo.tool.radprop.radiance_disturbances import RadianceDisturbances
@@ -13,6 +12,7 @@ class RadPropProcessor():
     def __init__(self):
         self._algorithm_factory = AlgorithmFactory()
         self._rad_disturbance_proc = RadianceDisturbances()
+        self.sensitivity_calculator = SensitivityCalculator()
         self.input_file = None
 
     def run(self, cmd_line_args):
@@ -25,8 +25,7 @@ class RadPropProcessor():
         disturbances = self._rad_disturbance_proc.calculate(dataset, variable_names)
 
         # sensitivities per channel
-        sensitivity_calculator = SensitivityCalculator()
-        sensitivities = sensitivity_calculator.run(dataset, disturbances, algorithm)
+        sensitivities = self.sensitivity_calculator.run(dataset, disturbances, algorithm)
 
         target_variable = algorithm.process(dataset)
 
@@ -34,28 +33,6 @@ class RadPropProcessor():
         target_dataset[cmd_line_args.algorithm] = target_variable
 
         self._write_result(cmd_line_args, target_dataset)
-
-    def calculate_positive_disturbed_dataset(self, dataset, disturbances, variable_names):
-        disturbed_dataset = xr.Dataset()
-        for variable_name in variable_names:
-            variable = dataset[variable_name]
-            if variable_name in disturbances:
-                rad_dist = variable.data + disturbances[variable_name]
-                disturbed_dataset[variable_name] = Variable(variable.dims, rad_dist)
-            else:
-                disturbed_dataset[variable_name] = variable
-        return disturbed_dataset
-
-    def calculate_negative_disturbed_dataset(self, dataset, disturbances, variable_names):
-        disturbed_dataset = xr.Dataset()
-        for variable_name in variable_names:
-            variable = dataset[variable_name]
-            if variable_name in disturbances:
-                rad_dist = variable.data - disturbances[variable_name]
-                disturbed_dataset[variable_name] = Variable(variable.dims, rad_dist)
-            else:
-                disturbed_dataset[variable_name] = variable
-        return disturbed_dataset
 
     def get_algorithm_help_string(self):
         algorithm_names = self._algorithm_factory.get_names()
