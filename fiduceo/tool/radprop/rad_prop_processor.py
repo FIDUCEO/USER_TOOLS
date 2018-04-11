@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import xarray as xr
 
 from fiduceo.tool.radprop.algorithms.algorithm_factory import AlgorithmFactory
@@ -27,6 +28,29 @@ class RadPropProcessor():
         # sensitivities per channel
         sensitivities = self.sensitivity_calculator.run(dataset, disturbances, algorithm)
 
+        rci, rcs = self._subset_correlation_matrices(dataset, variable_names)
+
+        width = dataset.dims["x"]
+        height = dataset.dims["y"]
+
+        for y in range(0, height):
+            for x in range(0, width):
+                # @todo extract uIndependent for pixel
+                # @todo calculate Sci = Uci * Rci * UciT
+
+                # @todo extract uStructured for pixel
+                # @todo calculate Scs = Ucs * Rcs * UcsT
+
+                # not for now tb 2018-04-11
+                # @todo calculate Sch = Uch + UchT
+
+                sens_pixel = sensitivities[:, y, x]
+
+                # @todo calculate total uncertainty
+
+                # @todo calculate component uncertainty
+                pass
+
         target_variable = algorithm.process(dataset)
 
         target_dataset = xr.Dataset()
@@ -41,6 +65,13 @@ class RadPropProcessor():
             help_string += "- " + name + "\n"
 
         return help_string
+
+    def _subset_correlation_matrices(self, dataset, channel_names):
+        # @todo read correlation matrices and subset
+        num_channels = len(channel_names)
+        rci = np.diag(np.ones(num_channels))
+        rcs = np.diag(np.ones(num_channels))
+        return rci, rcs
 
     def _write_result(self, cmd_line_args, target_dataset):
         target_filename = self._create_target_filename(cmd_line_args.input_file, cmd_line_args.algorithm)

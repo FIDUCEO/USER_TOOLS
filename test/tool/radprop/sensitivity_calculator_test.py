@@ -19,13 +19,13 @@ class SensitivityCalculatorTest(unittest.TestCase):
 
         sensitivities = self.sensitivity_calculator.run(dataset, disturbances, AvhrrNaiveSST())
 
-        self.assertEqual(2, len(sensitivities))
-        ch4_sensitivity = sensitivities["Ch4"]
+        self.assertEqual((2, 3, 2), sensitivities.shape)
+        ch4_sensitivity = sensitivities[0, :, :]
         self.assertAlmostEqual(0.8, ch4_sensitivity[0, 0], 8)
         self.assertAlmostEqual(0.78, ch4_sensitivity[0, 1], 8)
         self.assertAlmostEqual(0.82, ch4_sensitivity[1, 0], 8)
 
-        ch5_sensitivity = sensitivities["Ch5"]
+        ch5_sensitivity = sensitivities[1, :, :]
         self.assertAlmostEqual(-0.37, ch5_sensitivity[1, 1], 8)
         self.assertAlmostEqual(-0.42, ch5_sensitivity[2, 0], 8)
         self.assertAlmostEqual(-0.36, ch5_sensitivity[2, 1], 8)
