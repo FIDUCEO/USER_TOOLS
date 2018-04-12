@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import xarray as xr
+from xarray import Variable
 
 from fiduceo.tool.radprop.algorithms.algorithm_factory import AlgorithmFactory
 from fiduceo.tool.radprop.radiance_disturbances import RadianceDisturbances
@@ -23,38 +24,58 @@ class RadPropProcessor():
 
         # disturbances per channel
         variable_names = algorithm.get_variable_names()
+        channel_names = self._extract_channel_variables(variable_names)
         disturbances = self._rad_disturbance_proc.calculate(dataset, variable_names)
 
         # sensitivities per channel
         sensitivities = self.sensitivity_calculator.run(dataset, disturbances, algorithm)
 
-        rci, rcs = self._subset_correlation_matrices(dataset, variable_names)
+        rci, rcs = self._subset_correlation_matrices(dataset)
+        u_ind, u_str = self._extract_uncertainties(dataset, channel_names)
 
         width = dataset.dims["x"]
         height = dataset.dims["y"]
 
+        u = np.full([height, width], np.nan, np.float32)
+        u_i = np.full([height, width], np.nan, np.float32)
+        u_s = np.full([height, width], np.nan, np.float32)
+
         for y in range(0, height):
             for x in range(0, width):
-                # @todo extract uIndependent for pixel
-                # @todo calculate Sci = Uci * Rci * UciT
+                u_ind_pixel = u_ind[:, y, x]
+                uci = np.diag(u_ind_pixel)
+                sci = np.dot(uci, rci)
+                sci = np.dot(sci, uci)
 
-                # @todo extract uStructured for pixel
-                # @todo calculate Scs = Ucs * Rcs * UcsT
+                u_str_pixel = u_str[:, y, x]
+                ucs = np.diag(u_str_pixel)
+                scs = np.dot(ucs, rci)
+                scs = np.dot(scs, ucs)
 
                 # not for now tb 2018-04-11
                 # @todo calculate Sch = Uch + UchT
 
-                sens_pixel = sensitivities[:, y, x]
+                c = sensitivities[:, y, x]
 
-                # @todo calculate total uncertainty
+                u_total_sq = np.dot(c, (sci + scs))
+                u_total_sq = np.dot(u_total_sq, c)
+                u[y, x] = np.sqrt(u_total_sq)
 
-                # @todo calculate component uncertainty
-                pass
+                u_ind_sq = np.dot(c, sci)
+                u_ind_sq = np.dot(u_ind_sq, c)
+                u_i[y,x] = np.sqrt(u_ind_sq)
+
+                u_str_sq = np.dot(c, scs)
+                u_str_sq = np.dot(u_str_sq, c)
+                u_s[y,x] = np.sqrt(u_str_sq)
 
         target_variable = algorithm.process(dataset)
 
         target_dataset = xr.Dataset()
         target_dataset[cmd_line_args.algorithm] = target_variable
+        target_dataset["u_total"] = Variable(["y", "x"], u)
+        target_dataset["u_independent"] = Variable(["y", "x"], u_i)
+        target_dataset["u_structured"] = Variable(["y", "x"], u_s)
 
         self._write_result(cmd_line_args, target_dataset)
 
@@ -66,12 +87,51 @@ class RadPropProcessor():
 
         return help_string
 
-    def _subset_correlation_matrices(self, dataset, channel_names):
+    def _subset_correlation_matrices(self, dataset):
         # @todo read correlation matrices and subset
-        num_channels = len(channel_names)
-        rci = np.diag(np.ones(num_channels))
-        rcs = np.diag(np.ones(num_channels))
+        # for now we have only algorithms with two channels and assume no correlation, just to get the code running
+        rci = np.diag(np.ones(2))
+        rcs = np.diag(np.ones(2))
+
+        # rci = np.array(([1, 0.33], [0.33, 1]), dtype=np.float64)
+        # rcs = np.array(([1, 0.33], [0.33, 1]), dtype=np.float64)
         return rci, rcs
+
+    def _extract_uncertainties(self, dataset, channel_names):
+        width = dataset.dims["x"]
+        height = dataset.dims["y"]
+        u_ind = np.full([len(channel_names), height, width], np.nan, np.float64)
+        u_str = np.full([len(channel_names), height, width], np.nan, np.float64)
+
+        index = 0
+        for name, chanel_index in channel_names.items():
+            u_ind_name = "u_independent_" + name
+            u_ind[index, :, :] = dataset[u_ind_name].data
+
+            u_str_name = "u_structured_" + name
+            u_str[index, :, :] = dataset[u_str_name].data
+            index += 1
+
+        return u_ind, u_str
+
+    def _extract_channel_variables(self, variable_names):
+        # @todo read from channel coordinate and order by spectral index
+        channel_names = dict()
+        for name in variable_names:
+            if name == "Ch1":
+                channel_names.update({"Ch1": 0})
+            if name == "Ch2":
+                channel_names.update({"Ch2": 1})
+            if name == "Ch3a":
+                channel_names.update({"Ch3a": 2})
+            if name == "Ch3b":
+                channel_names.update({"Ch3b": 3})
+            if name == "Ch4":
+                channel_names.update({"Ch4": 4})
+            if name == "Ch5":
+                channel_names.update({"Ch5": 5})
+
+        return channel_names
 
     def _write_result(self, cmd_line_args, target_dataset):
         target_filename = self._create_target_filename(cmd_line_args.input_file, cmd_line_args.algorithm)
