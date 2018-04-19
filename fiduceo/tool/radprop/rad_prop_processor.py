@@ -79,6 +79,8 @@ class RadPropProcessor():
 
         self._write_result(cmd_line_args, target_dataset)
 
+        dataset.close()
+
     def get_algorithm_help_string(self):
         algorithm_names = self._algorithm_factory.get_names()
         help_string = "available algorithms are:\n"
