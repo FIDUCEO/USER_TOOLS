@@ -7,6 +7,7 @@ from xarray import Variable
 from fiduceo.tool.radprop.algorithms.algorithm_factory import AlgorithmFactory
 from fiduceo.tool.radprop.radiance_disturbances import RadianceDisturbances
 from fiduceo.tool.radprop.sensitivity_calculator import SensitivityCalculator
+from fiduceo.tool.radprop.error_covariances import ErrorCovariances
 
 
 class RadPropProcessor():
@@ -40,17 +41,15 @@ class RadPropProcessor():
         u_i = np.full([height, width], np.nan, np.float32)
         u_s = np.full([height, width], np.nan, np.float32)
 
+        error_covariances = ErrorCovariances()
+
         for y in range(0, height):
             for x in range(0, width):
                 u_ind_pixel = u_ind[:, y, x]
-                uci = np.diag(u_ind_pixel)
-                sci = np.dot(uci, rci)
-                sci = np.dot(sci, uci)
+                sci = error_covariances.calculate(u_ind_pixel, rci)
 
                 u_str_pixel = u_str[:, y, x]
-                ucs = np.diag(u_str_pixel)
-                scs = np.dot(ucs, rci)
-                scs = np.dot(scs, ucs)
+                scs = error_covariances.calculate(u_str_pixel, rci)
 
                 # not for now tb 2018-04-11
                 # @todo calculate Sch = Uch + UchT
@@ -63,11 +62,11 @@ class RadPropProcessor():
 
                 u_ind_sq = np.dot(c, sci)
                 u_ind_sq = np.dot(u_ind_sq, c)
-                u_i[y,x] = np.sqrt(u_ind_sq)
+                u_i[y, x] = np.sqrt(u_ind_sq)
 
                 u_str_sq = np.dot(c, scs)
                 u_str_sq = np.dot(u_str_sq, c)
-                u_s[y,x] = np.sqrt(u_str_sq)
+                u_s[y, x] = np.sqrt(u_str_sq)
 
         target_variable = algorithm.process(dataset)
 
