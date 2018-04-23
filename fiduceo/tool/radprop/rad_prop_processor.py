@@ -7,7 +7,6 @@ from numba import jit, prange
 from xarray import Variable
 
 from fiduceo.tool.radprop.algorithms.algorithm_factory import AlgorithmFactory
-from fiduceo.tool.radprop.error_covariances import ErrorCovariances
 from fiduceo.tool.radprop.radiance_disturbances import RadianceDisturbances
 from fiduceo.tool.radprop.sensitivity_calculator import SensitivityCalculator
 
@@ -36,13 +35,11 @@ class RadPropProcessor():
         rci, rcs = self._subset_correlation_matrices(dataset)
         u_ind, u_str = self._extract_uncertainties(dataset, channel_names)
 
-        error_covariances = ErrorCovariances()
-
         width = dataset.dims["x"]
         height = dataset.dims["y"]
 
         start_time = time.time()
-        uncertainties = calculate_uncertainty_components(width, height, rci, u_ind, u_str, sensitivities)
+        uncertainties = calculate_uncertainty_components(width, height, rci, rcs, u_ind, u_str, sensitivities)
         print("--- %s seconds ---" % (time.time() - start_time))
 
         target_variable = algorithm.process(dataset)
@@ -169,8 +166,8 @@ def create_float_array_3D(width, height, layers):
     return np.zeros((la_64, he_64, wi_64), dtype=np.float32)
 
 
-@jit('float32[:, :, :](int32, int32, float64[:,:], float64[:,:,:], float64[:,:,:], float64[:,:,:])', nopython=True, parallel=True)
-def calculate_uncertainty_components(width, height, rci, u_ind, u_str, sensitivities):
+@jit('float32[:, :, :](int32, int32, float64[:,:], float64[:,:], float64[:,:,:], float64[:,:,:], float64[:,:,:])', nopython=True, parallel=True)
+def calculate_uncertainty_components(width, height, rci, rcs, u_ind, u_str, sensitivities):
     u = create_float_array(width, height)
     u_i = create_float_array(width, height)
     u_s = create_float_array(width, height)
@@ -182,7 +179,7 @@ def calculate_uncertainty_components(width, height, rci, u_ind, u_str, sensitivi
             sci = calculate_covariances(u_ind_pixel, rci)
 
             u_str_pixel = u_str[:, y, x]
-            scs = calculate_covariances(u_str_pixel, rci)
+            scs = calculate_covariances(u_str_pixel, rcs)
 
             # not for now tb 2018-04-11
             # @todo calculate Sch = Uch + UchT
