@@ -1,13 +1,15 @@
 import os
+import time
 
 import numpy as np
 import xarray as xr
+from numba import jit, prange
 from xarray import Variable
 
 from fiduceo.tool.radprop.algorithms.algorithm_factory import AlgorithmFactory
+from fiduceo.tool.radprop.error_covariances import ErrorCovariances
 from fiduceo.tool.radprop.radiance_disturbances import RadianceDisturbances
 from fiduceo.tool.radprop.sensitivity_calculator import SensitivityCalculator
-from fiduceo.tool.radprop.error_covariances import ErrorCovariances
 
 
 class RadPropProcessor():
@@ -34,47 +36,22 @@ class RadPropProcessor():
         rci, rcs = self._subset_correlation_matrices(dataset)
         u_ind, u_str = self._extract_uncertainties(dataset, channel_names)
 
+        error_covariances = ErrorCovariances()
+
         width = dataset.dims["x"]
         height = dataset.dims["y"]
 
-        u = np.full([height, width], np.nan, np.float32)
-        u_i = np.full([height, width], np.nan, np.float32)
-        u_s = np.full([height, width], np.nan, np.float32)
-
-        error_covariances = ErrorCovariances()
-
-        for y in range(0, height):
-            for x in range(0, width):
-                u_ind_pixel = u_ind[:, y, x]
-                sci = error_covariances.calculate(u_ind_pixel, rci)
-
-                u_str_pixel = u_str[:, y, x]
-                scs = error_covariances.calculate(u_str_pixel, rci)
-
-                # not for now tb 2018-04-11
-                # @todo calculate Sch = Uch + UchT
-
-                c = sensitivities[:, y, x]
-
-                u_total_sq = np.dot(c, (sci + scs))
-                u_total_sq = np.dot(u_total_sq, c)
-                u[y, x] = np.sqrt(u_total_sq)
-
-                u_ind_sq = np.dot(c, sci)
-                u_ind_sq = np.dot(u_ind_sq, c)
-                u_i[y, x] = np.sqrt(u_ind_sq)
-
-                u_str_sq = np.dot(c, scs)
-                u_str_sq = np.dot(u_str_sq, c)
-                u_s[y, x] = np.sqrt(u_str_sq)
+        start_time = time.time()
+        uncertainties = calculate_uncertainty_components(width, height, rci, u_ind, u_str, sensitivities)
+        print("--- %s seconds ---" % (time.time() - start_time))
 
         target_variable = algorithm.process(dataset)
 
         target_dataset = xr.Dataset()
         target_dataset[cmd_line_args.algorithm] = target_variable
-        target_dataset["u_total"] = Variable(["y", "x"], u)
-        target_dataset["u_independent"] = Variable(["y", "x"], u_i)
-        target_dataset["u_structured"] = Variable(["y", "x"], u_s)
+        target_dataset["u_total"] = Variable(["y", "x"], uncertainties[0, :, :])
+        target_dataset["u_independent"] = Variable(["y", "x"], uncertainties[1, :, :])
+        target_dataset["u_structured"] = Variable(["y", "x"], uncertainties[2, :, :])
 
         self._write_result(cmd_line_args, target_dataset)
 
@@ -91,8 +68,8 @@ class RadPropProcessor():
     def _subset_correlation_matrices(self, dataset):
         # @todo read correlation matrices and subset
         # for now we have only algorithms with two channels and assume no correlation, just to get the code running
-        rci = np.diag(np.ones(2))
-        rcs = np.diag(np.ones(2))
+        rci = np.diag(np.ones(2, dtype=np.float64))
+        rcs = np.diag(np.ones(2, dtype=np.float64))
 
         # rci = np.array(([1, 0.33], [0.33, 1]), dtype=np.float64)
         # rcs = np.array(([1, 0.33], [0.33, 1]), dtype=np.float64)
@@ -152,3 +129,72 @@ class RadPropProcessor():
         (prefix, extension) = os.path.splitext(file_name)
 
         return prefix + "_" + algorithm_name + extension
+
+
+@jit('float64[:, :](float64[:], float64[:, :])', nopython=True)
+def calculate_covariances(uncertainty_vector, correlation_matrix):
+    unc_matrix = np.diag(uncertainty_vector)
+    covariance_matrix = np.dot(unc_matrix, correlation_matrix)
+    covariance_matrix = np.dot(covariance_matrix, unc_matrix)
+
+    return covariance_matrix
+
+
+@jit('float32(float64[:], float64[:, :], float64[:, :])', nopython=True)
+def calculate_total_uncertainty(c, sci, scs):
+    u_total_sq = np.dot(c, (sci + scs))
+    u_total_sq = np.dot(u_total_sq, c)
+    return np.sqrt(u_total_sq)
+
+
+@jit('float32(float64[:], float64[:, :])', nopython=True)
+def calculate_uncertainty(c, s):
+    u_sq = np.dot(c, s)
+    u_sq = np.dot(u_sq, c)
+    return np.sqrt(u_sq)
+
+
+@jit('float32[:, :](int32, int32)', nopython=True)
+def create_float_array(width, height):
+    he_64 = np.int64(height)
+    wi_64 = np.int64(width)
+    return np.zeros((he_64, wi_64), dtype=np.float32)
+
+
+@jit('float32[:, :, :](int32, int32, int32)', nopython=True)
+def create_float_array_3D(width, height, layers):
+    he_64 = np.int64(height)
+    wi_64 = np.int64(width)
+    la_64 = np.int64(layers)
+    return np.zeros((la_64, he_64, wi_64), dtype=np.float32)
+
+
+@jit('float32[:, :, :](int32, int32, float64[:,:], float64[:,:,:], float64[:,:,:], float64[:,:,:])', nopython=True, parallel=True)
+def calculate_uncertainty_components(width, height, rci, u_ind, u_str, sensitivities):
+    u = create_float_array(width, height)
+    u_i = create_float_array(width, height)
+    u_s = create_float_array(width, height)
+
+    for y in prange(0, height):
+        for x in prange(0, width):
+            u_ind_pixel = u_ind[:, y, x]
+
+            sci = calculate_covariances(u_ind_pixel, rci)
+
+            u_str_pixel = u_str[:, y, x]
+            scs = calculate_covariances(u_str_pixel, rci)
+
+            # not for now tb 2018-04-11
+            # @todo calculate Sch = Uch + UchT
+
+            c = sensitivities[:, y, x]
+
+            u[y, x] = calculate_total_uncertainty(c, sci, scs)
+            u_i[y, x] = calculate_uncertainty(c, sci)
+            u_s[y, x] = calculate_uncertainty(c, scs)
+
+    result = create_float_array_3D(width, height, 3)
+    result[0, :, :] = u
+    result[1, :, :] = u_i
+    result[2, :, :] = u_s
+    return result
