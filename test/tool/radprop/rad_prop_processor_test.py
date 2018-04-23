@@ -80,7 +80,7 @@ class RadPropProcessorTest(unittest.TestCase):
         covariance = np.array([[0.978, 0.0], [0.0, 0.965]], dtype=np.float64)
 
         uncertainty = calculate_uncertainty(uncertainty_px, covariance)
-        self.assertAlmostEqual(0.34442800283432007, uncertainty, 8)
+        self.assertAlmostEqual(0.34442800283432007, uncertainty, 7)
 
     def test_calculate_uncertainty_2channel_correlated(self):
         uncertainty_px = np.array([0.34, 0.076], dtype=np.float64)
@@ -94,7 +94,7 @@ class RadPropProcessorTest(unittest.TestCase):
         covariance = np.array([[0.978, 0.0, 0.0], [0.0, 0.621, 0.0], [0.0, 0.0, 0.965]], dtype=np.float64)
 
         uncertainty = calculate_uncertainty(uncertainty_px, covariance)
-        self.assertAlmostEqual(0.6144751310348511, uncertainty, 8)
+        self.assertAlmostEqual(0.6144751310348511, uncertainty, 7)
 
     def test_calculate_uncertainty_3channel_correlated(self):
         uncertainty_px = np.array([0.34, 0.076, 0.52], dtype=np.float64)
