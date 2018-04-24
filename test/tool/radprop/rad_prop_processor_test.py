@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from fiduceo.tool.radprop.rad_prop_processor import RadPropProcessor, calculate_covariances, calculate_uncertainty
+from fiduceo.tool.radprop.rad_prop_processor import RadPropProcessor, calculate_covariances, calculate_uncertainty, calculate_total_uncertainty, create_float_array, create_float_array_3D
 
 
 class RadPropProcessorTest(unittest.TestCase):
@@ -18,7 +18,7 @@ class RadPropProcessorTest(unittest.TestCase):
         self.assertEqual("available algorithms are:\n" + "- AVHRR_SST_NAIVE\n" + "- AVHRR_SST_SIMPLE\n" + "- AVHRR_NDVI\n", help_string)
 
     def test_calculate_covariances_2vars_uncorrelated(self):
-        correlation_matrix =  np.diag(np.ones(2, dtype=np.float64))
+        correlation_matrix = np.diag(np.ones(2, dtype=np.float64))
         uncertainty_vector = np.array([0.72, 0.56], dtype=np.float64)
 
         covariances = calculate_covariances(uncertainty_vector, correlation_matrix)
@@ -29,7 +29,7 @@ class RadPropProcessorTest(unittest.TestCase):
         self.assertAlmostEqual(0.3136, covariances[1, 1], 8)
 
     def test_calculate_covariances_2vars_correlated(self):
-        correlation_matrix =  np.diag(np.ones(2, dtype=np.float64))
+        correlation_matrix = np.diag(np.ones(2, dtype=np.float64))
         correlation_matrix[0, 1] = 0.27
         correlation_matrix[1, 0] = 0.27
         uncertainty_vector = np.array([0.72, 0.56], dtype=np.float64)
@@ -42,7 +42,7 @@ class RadPropProcessorTest(unittest.TestCase):
         self.assertAlmostEqual(0.3136, covariances[1, 1], 8)
 
     def test_calculate_covariances_3vars_uncorrelated(self):
-        correlation_matrix =  np.diag(np.ones(3, dtype=np.float64))
+        correlation_matrix = np.diag(np.ones(3, dtype=np.float64))
         uncertainty_vector = np.array([0.96, 0.63, 0.27], dtype=np.float64)
 
         covariances = calculate_covariances(uncertainty_vector, correlation_matrix)
@@ -58,7 +58,7 @@ class RadPropProcessorTest(unittest.TestCase):
         self.assertAlmostEqual(0.0729, covariances[2, 2], 8)
 
     def test_calculate_covariances_3vars_partially_correlated(self):
-        correlation_matrix =  np.diag(np.ones(3, dtype=np.float64))
+        correlation_matrix = np.diag(np.ones(3, dtype=np.float64))
         correlation_matrix[1, 2] = 0.4
         correlation_matrix[2, 1] = 0.4
         uncertainty_vector = np.array([0.96, 0.63, 0.27], dtype=np.float64)
@@ -102,3 +102,33 @@ class RadPropProcessorTest(unittest.TestCase):
 
         uncertainty = calculate_uncertainty(uncertainty_px, covariance)
         self.assertAlmostEqual(0.6526957154273987, uncertainty, 8)
+
+    def test_calculate_total_uncertainty_2channel_uncorrelated(self):
+        uncertainty_px = np.array([0.34, 0.076], dtype=np.float64)
+        cov_i = np.array([[0.978, 0.0], [0.0, 0.965]], dtype=np.float64)
+        cov_s = np.array([[0.235, 0.0], [0.0, 0.567]], dtype=np.float64)
+
+        uncertainty = calculate_total_uncertainty(uncertainty_px, cov_i, cov_s)
+        self.assertAlmostEqual(0.3860979676246643, uncertainty, 7)
+
+    def test_calculate_total_uncertainty_3channel_correlated(self):
+        uncertainty_px = np.array([0.34, 0.076, 0.208], dtype=np.float64)
+        cov_i = np.array([[0.978, 0.1, 0.1], [0.1, 0.895, 0.1], [0.1, 0.1, 0.965]], dtype=np.float64)
+        cov_s = np.array([[0.235, 0.1, 0.1], [0.1, 0.567, 0.1], [0.1, 0.1, 0.884]], dtype=np.float64)
+
+        uncertainty = calculate_total_uncertainty(uncertainty_px, cov_i, cov_s)
+        self.assertAlmostEqual(0.5230770707130432, uncertainty, 7)
+
+    def test_create_float_array(self):
+        float_array = create_float_array(21, 76)
+
+        self.assertEqual((76, 21), float_array.shape)
+        self.assertEqual(np.float32, float_array.dtype)
+        self.assertAlmostEqual(0.0, float_array[56, 11], 8)
+
+    def test_create_float_array_3d(self):
+        float_array = create_float_array_3D(15, 54, 4)
+
+        self.assertEqual((4, 54, 15), float_array.shape)
+        self.assertEqual(np.float32, float_array.dtype)
+        self.assertAlmostEqual(0.0, float_array[1, 46, 12], 8)
