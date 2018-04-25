@@ -19,6 +19,6 @@ class AvhrrNaiveSST:
         return ["Ch4", "Ch5"]
 
 
-@jit('float64[:, :](float64[:, :], float64[:, :])', nopython=True, parallel=True)
+@jit('float64[:, :](float64[:, :], float64[:, :])', nopython=True)
 def process_sst(ch4, ch5):
     return 2.0 * ch4 - ch5 + 1.0

@@ -11,19 +11,19 @@ class SensitivityCalculator():
         height = dataset.dims["y"]
 
         for channel_name, channel_disturbance in disturbances.items():
-            positive_disturbance = dataset[channel_name].data + channel_disturbance
-            negative_disturbance = dataset[channel_name].data - channel_disturbance
+            positive_disturbance = dataset[channel_name].values + channel_disturbance
+            negative_disturbance = dataset[channel_name].values - channel_disturbance
 
             names = algorithm.get_variable_names()
 
             subset = self._create_subset(dataset, names)
-            subset[channel_name].data = positive_disturbance
+            subset[channel_name].values = positive_disturbance
             z2 = algorithm.process(subset)
 
-            subset[channel_name].data = negative_disturbance
+            subset[channel_name].values = negative_disturbance
             z1 = algorithm.process(subset)
 
-            sensitivity = (z2.data - z1.data) * 0.5
+            sensitivity = (z2.values - z1.values) * 0.5
 
             sensitivities.update({channel_name: sensitivity})
 

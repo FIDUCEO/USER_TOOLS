@@ -19,6 +19,7 @@ class AvhrrSimpleSST:
     def get_variable_names(self):
         return ["Ch4", "Ch5", "satellite_zenith_angle"]
 
-@jit('float64[:, :](float64[:, :], float64[:, :], float64[:, :])', nopython=True, parallel=True)
+
+@jit('float64[:, :](float64[:, :], float64[:, :], float64[:, :])', nopython=True)
 def process_sst(ch4, ch5, sza):
     return ch4 + 1.0 / np.cos(sza * np.pi / 180.0) * (ch4 - ch5) + 1.0
