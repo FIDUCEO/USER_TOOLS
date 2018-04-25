@@ -16,7 +16,7 @@ setup(name='fiduceo_user_tools',
       author_email='tom.block@brockmann-consult.de',
       url='http://www.fiduceo.eu',
       packages=find_packages(),
-      install_requires=['numpy>=1.11.0', 'xarray>=0.8.2', 'netcdf4>=1.2.4', 'dask>=0.15.2', 'numba>=0.37'],
+      install_requires=['numpy>=1.11.0', 'xarray>=0.8.2', 'netcdf4>=1.2.4', 'dask>=0.15.2', 'numba>=0.37', 'scipy>=0.19'],
       entry_points={
           'console_scripts': [
               'fiduceo-radprop = fiduceo.tool.radprop.cli.main:main',
