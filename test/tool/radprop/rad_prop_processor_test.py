@@ -15,7 +15,7 @@ class RadPropProcessorTest(unittest.TestCase):
         processor = RadPropProcessor()
 
         help_string = processor.get_algorithm_help_string()
-        self.assertEqual("available algorithms are:\n" + "- AVHRR_SST_NAIVE\n" + "- AVHRR_SST_SIMPLE\n" + "- AVHRR_NDVI\n", help_string)
+        self.assertEqual("available algorithms are:\n" + "- AVHRR_SST_NAIVE\n" + "- AVHRR_SST_SIMPLE\n" + "- AVHRR_NDVI\n" + "- MW_UTH\n", help_string)
 
     def test_calculate_covariances_2vars_uncorrelated(self):
         correlation_matrix = np.diag(np.ones(2, dtype=np.float64))
@@ -132,3 +132,18 @@ class RadPropProcessorTest(unittest.TestCase):
         self.assertEqual((4, 54, 15), float_array.shape)
         self.assertEqual(np.float32, float_array.dtype)
         self.assertAlmostEqual(0.0, float_array[1, 46, 12], 8)
+
+    def test_extract_channel_indices(self):
+        channel_names = ["Ch4", "Ch5"]
+
+        channel_indices = RadPropProcessor._extract_channel_indices(None, channel_names)
+        self.assertEqual(2, len(channel_indices))
+        self.assertEqual(4, channel_indices["Ch4"])
+        self.assertEqual(5, channel_indices["Ch5"])
+
+        channel_names = ["Ch2_BT", "Ch4_BT"]
+
+        channel_indices = RadPropProcessor._extract_channel_indices(None, channel_names)
+        self.assertEqual(2, len(channel_indices))
+        self.assertEqual(1, channel_indices["Ch2_BT"])
+        self.assertEqual(3, channel_indices["Ch4_BT"])

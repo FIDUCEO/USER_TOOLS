@@ -56,6 +56,7 @@ class RadPropCliTest(unittest.TestCase):
         self.assertEqual("available algorithms are:\n"
                      "- AVHRR_SST_NAIVE\n"
                      "- AVHRR_SST_SIMPLE\n"
-                     "- AVHRR_NDVI\n", parser._positionals._actions[3].help)
+                     "- AVHRR_NDVI\n"
+                     "- MW_UTH\n", parser._positionals._actions[3].help)
 
 

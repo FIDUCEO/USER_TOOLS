@@ -9,22 +9,27 @@ from test.tool.test_data_utils import TestDataUtils
 
 class RadPropProcessorIOTest(unittest.TestCase):
     AVHRR_FCDR = "FIDUCEO_FCDR_L1C_AVHRR_NOAA11_19920704103249_19920704121448_EASY_v0.4pre_fv1.1.1.nc"
+    MHS_FCDR = "FIDUCEO_FCDR_L1C_MHS_METOPB_20150706154758_20150706172920_EASY_v2.0_fv1.1.4.nc"
 
     def setUp(self):
         self.target_file = None
 
-        data_dir = TestDataUtils.get_test_data_dir()
-        self.test_file = os.path.join(data_dir, self.AVHRR_FCDR)
-        self.assertTrue(os.path.isfile(self.test_file))
-
         self.output_dir = TestDataUtils.get_output_dir()
+
+    def _get_test_file(self, filename):
+        data_dir = TestDataUtils.get_test_data_dir()
+        test_file = os.path.join(data_dir, filename)
+        self.assertTrue(os.path.isfile(test_file))
+        return test_file
 
     def tearDown(self):
         if self.target_file is not None:
             os.remove(self.target_file)
 
     def test_run_avhrr_naive_sst(self):
-        cmd_line_args = ["-o", self.output_dir, "-a", "AVHRR_SST_NAIVE", "-i", self.test_file, "--traceback"]
+        test_file = self._get_test_file(self.AVHRR_FCDR)
+
+        cmd_line_args = ["-o", self.output_dir, "-a", "AVHRR_SST_NAIVE", "-i", test_file, "--traceback"]
 
         main(cmd_line_args)
 
@@ -52,7 +57,8 @@ class RadPropProcessorIOTest(unittest.TestCase):
             dataset.close()
 
     def test_run_avhrr_simple_sst(self):
-        cmd_line_args = ["-o", self.output_dir, "-a", "AVHRR_SST_SIMPLE", "-i", self.test_file, "--traceback"]
+        test_file = self._get_test_file(self.AVHRR_FCDR)
+        cmd_line_args = ["-o", self.output_dir, "-a", "AVHRR_SST_SIMPLE", "-i", test_file, "--traceback"]
 
         main(cmd_line_args)
 
@@ -80,7 +86,8 @@ class RadPropProcessorIOTest(unittest.TestCase):
             dataset.close()
 
     def test_run_avhrr_ndvi(self):
-        cmd_line_args = ["-o", self.output_dir, "-a", "AVHRR_NDVI", "-i", self.test_file, "--traceback"]
+        test_file = self._get_test_file(self.AVHRR_FCDR)
+        cmd_line_args = ["-o", self.output_dir, "-a", "AVHRR_NDVI", "-i", test_file, "--traceback"]
 
         main(cmd_line_args)
 
@@ -104,5 +111,34 @@ class RadPropProcessorIOTest(unittest.TestCase):
             retrieval = dataset["AVHRR_NDVI"]
             self.assertAlmostEqual(-0.027305512622359675, retrieval.values[36, 36], 8)
             self.assertAlmostEqual(-0.0225967062428188, retrieval.values[37, 37], 8)
+        finally:
+            dataset.close()
+
+    def test_run_mhs_uth(self):
+        test_file = self._get_test_file(self.MHS_FCDR)
+        cmd_line_args = ["-o", self.output_dir, "-a", "MW_UTH", "-i", test_file, "--traceback"]
+
+        main(cmd_line_args)
+
+        self.target_file = os.path.join(self.output_dir, "FIDUCEO_FCDR_L1C_MHS_METOPB_20150706154758_20150706172920_EASY_v2.0_fv1.1.4_MW_UTH.nc")
+        self.assertTrue(os.path.isfile(self.target_file))
+
+        dataset = xr.open_dataset(self.target_file, chunks=1024 * 1024)
+        try:
+            u_total = dataset["u_total"]
+            self.assertAlmostEqual(0.015711697, u_total.values[43, 33], 8)
+            self.assertAlmostEqual(0.015673734, u_total.values[44, 34], 8)
+
+            u_independent = dataset["u_independent"]
+            self.assertAlmostEqual(0.014508858, u_independent.values[44, 34], 8)
+            self.assertAlmostEqual(0.014499063, u_independent.values[45, 35], 8)
+
+            u_structured = dataset["u_structured"]
+            self.assertAlmostEqual(0.0059317476, u_structured.values[45, 35], 8)
+            self.assertAlmostEqual(0.0059337793, u_structured.values[46, 36], 8)
+
+            retrieval = dataset["MW_UTH"]
+            self.assertAlmostEqual(-2.0444, retrieval.values[46, 36], 8)
+            self.assertAlmostEqual(-2.0773, retrieval.values[47, 37], 8)
         finally:
             dataset.close()

@@ -26,14 +26,14 @@ class RadPropProcessor():
 
         # disturbances per channel
         variable_names = algorithm.get_variable_names()
-        channel_names = self._extract_channel_variables(variable_names)
+        channel_indices = self._extract_channel_indices(dataset, variable_names)
         disturbances = self._rad_disturbance_proc.calculate(dataset, variable_names)
 
         # sensitivities per channel
         sensitivities = self.sensitivity_calculator.run(dataset, disturbances, algorithm)
 
-        rci, rcs = self._subset_correlation_matrices(dataset)
-        u_ind, u_str = self._extract_uncertainties(dataset, channel_names)
+        rci, rcs = self._subset_correlation_matrices(dataset, channel_indices)
+        u_ind, u_str = self._extract_uncertainties(dataset, channel_indices)
 
         width = dataset.dims["x"]
         height = dataset.dims["y"]
@@ -62,11 +62,12 @@ class RadPropProcessor():
 
         return help_string
 
-    def _subset_correlation_matrices(self, dataset):
+    def _subset_correlation_matrices(self, dataset, channel_indices):
         # @todo read correlation matrices and subset
         # for now we have only algorithms with two channels and assume no correlation, just to get the code running
-        rci = np.diag(np.ones(2, dtype=np.float64))
-        rcs = np.diag(np.ones(2, dtype=np.float64))
+        size = len(channel_indices)
+        rci = np.diag(np.ones(size, dtype=np.float64))
+        rcs = np.diag(np.ones(size, dtype=np.float64))
 
         # rci = np.array(([1, 0.33], [0.33, 1]), dtype=np.float64)
         # rcs = np.array(([1, 0.33], [0.33, 1]), dtype=np.float64)
@@ -89,8 +90,9 @@ class RadPropProcessor():
 
         return u_ind, u_str
 
-    def _extract_channel_variables(self, variable_names):
-        # @todo read from channel coordinate and order by spectral index
+    @staticmethod
+    def _extract_channel_indices(dataset, variable_names):
+        # @todo 1 tb/tb read from channel coordinate and order by spectral index
         channel_names = dict()
         for name in variable_names:
             if name == "Ch1":
@@ -105,6 +107,16 @@ class RadPropProcessor():
                 channel_names.update({"Ch4": 4})
             if name == "Ch5":
                 channel_names.update({"Ch5": 5})
+            if name == "Ch1_BT":
+                channel_names.update({"Ch1_BT": 0})
+            if name == "Ch2_BT":
+                channel_names.update({"Ch2_BT": 1})
+            if name == "Ch3_BT":
+                channel_names.update({"Ch3_BT": 2})
+            if name == "Ch4_BT":
+                channel_names.update({"Ch4_BT": 3})
+            if name == "Ch5_BT":
+                channel_names.update({"Ch5_BT": 4})
 
         return channel_names
 
