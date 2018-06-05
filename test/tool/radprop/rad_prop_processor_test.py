@@ -1,6 +1,8 @@
 import unittest
 
 import numpy as np
+import xarray as xr
+from xarray import Variable
 
 from fiduceo.tool.radprop.rad_prop_processor import RadPropProcessor, calculate_covariances, calculate_uncertainty, calculate_total_uncertainty, create_float_array, create_float_array_3D
 
@@ -147,3 +149,48 @@ class RadPropProcessorTest(unittest.TestCase):
         self.assertEqual(2, len(channel_indices))
         self.assertEqual(1, channel_indices["Ch2_BT"])
         self.assertEqual(3, channel_indices["Ch4_BT"])
+
+    def test_subset_correlation_matrices_none_available(self):
+        dataset = xr.Dataset()
+        channel_indices =  dict([("ch_1", 0), ("ch_3", 2)])
+
+        rci, rcs, rcu = RadPropProcessor._subset_correlation_matrices(dataset, channel_indices)
+        self.assertEqual((2, 2), rci.shape)
+        self.assertAlmostEqual(1.0, rci[0, 0], 8)
+        self.assertAlmostEqual(0.0, rci[1, 0], 8)
+
+        self.assertEqual((2, 2), rcs.shape)
+        self.assertAlmostEqual(0.0, rcs[0, 1], 8)
+        self.assertAlmostEqual(1.0, rcs[1, 1], 8)
+
+        self.assertEqual((2, 2), rcu.shape)
+        self.assertAlmostEqual(1.0, rcu[0, 0], 8)
+        self.assertAlmostEqual(0.0, rcu[1, 0], 8)
+
+    def test_subset_correlation_matrices(self):
+        dataset = xr.Dataset()
+
+        u_cor_common = np.array([[1.0, 0.52, 0.46, 0.49], [0.52, 1.0, 0.82, 0.87], [0.46, 0.82, 1.0, 0.85], [0.49, 0.87, 0.85, 1.0]], dtype=np.float64)
+        dataset["channel_correlation_matrix_common"] = Variable(["channel", "channel"], u_cor_common)
+
+        u_cor_indep = np.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=np.float64)
+        dataset["channel_correlation_matrix_independent"] = Variable(["channel", "channel"], u_cor_indep)
+
+        u_cor_struc = np.array([[1.0, 0.1, 0.09, 0.12], [0.1, 1.0, 0.06, 0.07], [0.09, 0.06, 1.0, 0.07], [0.12, 0.07, 0.07, 1.0]], dtype=np.float64)
+        dataset["channel_correlation_matrix_structured"] = Variable(["channel", "channel"], u_cor_struc)
+
+        channel_indices = dict([("ch_1", 0), ("ch_3", 2)])
+
+        rci, rcs, rcu = RadPropProcessor._subset_correlation_matrices(dataset, channel_indices)
+
+        self.assertEqual((2, 2), rci.shape)
+        self.assertAlmostEqual(1.0, rci[0, 0], 8)
+        self.assertAlmostEqual(0.0, rci[1, 0], 8)
+
+        self.assertEqual((2, 2), rcs.shape)
+        self.assertAlmostEqual(0.09, rcs[0, 1], 8)
+        self.assertAlmostEqual(1.0, rcs[1, 1], 8)
+
+        self.assertEqual((2, 2), rcu.shape)
+        self.assertAlmostEqual(1.0, rcu[0, 0], 8)
+        self.assertAlmostEqual(0.46, rcu[1, 0], 8)

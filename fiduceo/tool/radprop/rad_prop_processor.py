@@ -10,6 +10,10 @@ from fiduceo.tool.radprop.algorithms.algorithm_factory import AlgorithmFactory
 from fiduceo.tool.radprop.radiance_disturbances import RadianceDisturbances
 from fiduceo.tool.radprop.sensitivity_calculator import SensitivityCalculator
 
+CORRELATION_MATRIX_INDEPENDENT = "channel_correlation_matrix_independent"
+CORRELATION_MATRIX_STRUCTURED = "channel_correlation_matrix_structured"
+CORRELATION_MATRIX_COMMON = "channel_correlation_matrix_common"
+
 
 class RadPropProcessor():
 
@@ -32,7 +36,7 @@ class RadPropProcessor():
         # sensitivities per channel
         sensitivities = self.sensitivity_calculator.run(dataset, disturbances, algorithm)
 
-        rci, rcs = self._subset_correlation_matrices(dataset, channel_indices)
+        rci, rcs, rcu = self._subset_correlation_matrices(dataset, channel_indices)
         u_ind, u_str = self._extract_uncertainties(dataset, channel_indices)
 
         width = dataset.dims["x"]
@@ -62,16 +66,36 @@ class RadPropProcessor():
 
         return help_string
 
-    def _subset_correlation_matrices(self, dataset, channel_indices):
+    @staticmethod
+    def _subset_correlation_matrices(dataset, channel_indices):
         # @todo read correlation matrices and subset
         # for now we have only algorithms with two channels and assume no correlation, just to get the code running
         size = len(channel_indices)
-        rci = np.diag(np.ones(size, dtype=np.float64))
-        rcs = np.diag(np.ones(size, dtype=np.float64))
+        indices = channel_indices.values()
+        index_array = np.array(list(indices), dtype=np.int16)
 
-        # rci = np.array(([1, 0.33], [0.33, 1]), dtype=np.float64)
-        # rcs = np.array(([1, 0.33], [0.33, 1]), dtype=np.float64)
-        return rci, rcs
+        if CORRELATION_MATRIX_INDEPENDENT in dataset:
+            full_correlation_matrix = dataset[CORRELATION_MATRIX_INDEPENDENT].values
+            row_subset = full_correlation_matrix[index_array, :]
+            rci = row_subset[:, index_array]
+        else:
+            rci = np.diag(np.ones(size, dtype=np.float64))
+
+        if CORRELATION_MATRIX_STRUCTURED in dataset:
+            full_correlation_matrix = dataset[CORRELATION_MATRIX_STRUCTURED].values
+            row_subset = full_correlation_matrix[index_array, :]
+            rcs = row_subset[:, index_array]
+        else:
+            rcs = np.diag(np.ones(size, dtype=np.float64))
+
+        if CORRELATION_MATRIX_COMMON in dataset:
+            full_correlation_matrix = dataset[CORRELATION_MATRIX_COMMON].values
+            row_subset = full_correlation_matrix[index_array, :]
+            rcu = row_subset[:, index_array]
+        else:
+            rcu = np.diag(np.ones(size, dtype=np.float64))
+
+        return rci, rcs, rcu
 
     def _extract_uncertainties(self, dataset, channel_names):
         width = dataset.dims["x"]
