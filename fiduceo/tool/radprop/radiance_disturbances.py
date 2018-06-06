@@ -44,6 +44,6 @@ class RadianceDisturbances:
         return disturbances
 
 
-@jit(nopython=True, parallel=True)
+@jit(nopython=True)
 def calculate_radiance_delta(u_ind, u_str, u_com):
     return np.sqrt(u_ind * u_ind + u_str * u_str + u_com * u_com)

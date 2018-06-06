@@ -194,3 +194,31 @@ class RadPropProcessorTest(unittest.TestCase):
         self.assertEqual((2, 2), rcu.shape)
         self.assertAlmostEqual(1.0, rcu[0, 0], 8)
         self.assertAlmostEqual(0.46, rcu[1, 0], 8)
+
+    def test_subset_correlation_matrices_mixed(self):
+        dataset = xr.Dataset()
+
+        u_cor_indep = np.array([[1.0, 0.2, 0.3, 0.4], [0.2, 1.0, 0.2, 0.3], [0.3, 0.2, 1.0, 0.2], [0.4, 0.3, 0.2, 1.0]], dtype=np.float64)
+        dataset["channel_correlation_matrix_independent"] = Variable(["channel", "channel"], u_cor_indep)
+
+        u_cor_struc = np.array([[1.0, 0.1, 0.09, 0.12], [0.1, 1.0, 0.06, 0.07], [0.09, 0.06, 1.0, 0.07], [0.12, 0.07, 0.07, 1.0]], dtype=np.float64)
+        dataset["channel_correlation_matrix_structured"] = Variable(["channel", "channel"], u_cor_struc)
+
+        channel_indices = dict([("ch_2", 1), ("ch_3", 2), ("ch_4", 3)])
+
+        rci, rcs, rcu = RadPropProcessor._subset_correlation_matrices(dataset, channel_indices)
+
+        self.assertEqual((3, 3), rci.shape)
+        self.assertAlmostEqual(1.0, rci[0, 0], 8)
+        self.assertAlmostEqual(0.2, rci[1, 0], 8)
+        self.assertAlmostEqual(0.3, rci[2, 0], 8)
+
+        self.assertEqual((3, 3), rcs.shape)
+        self.assertAlmostEqual(0.06, rcs[0, 1], 8)
+        self.assertAlmostEqual(1.0, rcs[1, 1], 8)
+        self.assertAlmostEqual(0.07, rcs[2, 1], 8)
+
+        self.assertEqual((3, 3), rcu.shape)
+        self.assertAlmostEqual(0.0, rcu[0, 2], 8)
+        self.assertAlmostEqual(0.0, rcu[1, 2], 8)
+        self.assertAlmostEqual(1.0, rcu[2, 2], 8)
