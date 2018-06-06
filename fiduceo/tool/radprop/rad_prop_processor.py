@@ -68,34 +68,33 @@ class RadPropProcessor():
 
     @staticmethod
     def _subset_correlation_matrices(dataset, channel_indices):
-        # @todo read correlation matrices and subset
-        # for now we have only algorithms with two channels and assume no correlation, just to get the code running
         size = len(channel_indices)
         indices = channel_indices.values()
         index_array = np.array(list(indices), dtype=np.int16)
 
         if CORRELATION_MATRIX_INDEPENDENT in dataset:
-            full_correlation_matrix = dataset[CORRELATION_MATRIX_INDEPENDENT].values
-            row_subset = full_correlation_matrix[index_array, :]
-            rci = row_subset[:, index_array]
+            rci = RadPropProcessor._get_subset(dataset, CORRELATION_MATRIX_INDEPENDENT, index_array)
         else:
             rci = np.diag(np.ones(size, dtype=np.float64))
 
         if CORRELATION_MATRIX_STRUCTURED in dataset:
-            full_correlation_matrix = dataset[CORRELATION_MATRIX_STRUCTURED].values
-            row_subset = full_correlation_matrix[index_array, :]
-            rcs = row_subset[:, index_array]
+            rcs = RadPropProcessor._get_subset(dataset, CORRELATION_MATRIX_STRUCTURED, index_array)
         else:
             rcs = np.diag(np.ones(size, dtype=np.float64))
 
         if CORRELATION_MATRIX_COMMON in dataset:
-            full_correlation_matrix = dataset[CORRELATION_MATRIX_COMMON].values
-            row_subset = full_correlation_matrix[index_array, :]
-            rcu = row_subset[:, index_array]
+            rcu = RadPropProcessor._get_subset(dataset, CORRELATION_MATRIX_COMMON, index_array)
         else:
             rcu = np.diag(np.ones(size, dtype=np.float64))
 
         return rci, rcs, rcu
+
+    @staticmethod
+    def _get_subset(dataset, variable_name, index_array):
+        full_correlation_matrix = dataset[variable_name].values
+        row_subset = full_correlation_matrix[index_array, :]
+        rci = row_subset[:, index_array]
+        return rci
 
     def _extract_uncertainties(self, dataset, channel_names):
         width = dataset.dims["x"]
