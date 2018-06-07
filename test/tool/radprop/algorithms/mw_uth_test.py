@@ -29,6 +29,6 @@ class MwUTHTest(unittest.TestCase):
 
         self.assertIsNotNone(result)
 
-        self.assertAlmostEqual(-1.5187, result.data[0, 1])
-        self.assertAlmostEqual(-1.4956, result.data[1, 0])
-        self.assertAlmostEqual(-1.5271, result.data[2, 1])
+        self.assertAlmostEqual(0.2189963972969076, result.data[0, 1])
+        self.assertAlmostEqual(0.2241140959243742, result.data[1, 0])
+        self.assertAlmostEqual(0.2171645321645235, result.data[2, 1])

@@ -138,23 +138,23 @@ class RadPropProcessorIOTest(unittest.TestCase):
         dataset = xr.open_dataset(self.target_file, chunks=1024 * 1024)
         try:
             u_total = dataset["u_total"]
-            self.assertAlmostEqual(0.016956562, u_total.values[43, 33], 8)
-            self.assertAlmostEqual(0.01691871, u_total.values[44, 34], 8)
+            self.assertAlmostEqual(0.0021023436, u_total.values[43, 33], 8)
+            self.assertAlmostEqual(0.0020873963, u_total.values[44, 34], 8)
 
             u_independent = dataset["u_independent"]
-            self.assertAlmostEqual(0.014508858, u_independent.values[44, 34], 8)
-            self.assertAlmostEqual(0.014499063, u_independent.values[45, 35], 8)
+            self.assertAlmostEqual(0.0017900737, u_independent.values[44, 34], 8)
+            self.assertAlmostEqual(0.0017788752, u_independent.values[45, 35], 8)
 
             u_structured = dataset["u_structured"]
-            self.assertAlmostEqual(0.0059317476, u_structured.values[45, 35], 8)
-            self.assertAlmostEqual(0.0059337793, u_structured.values[46, 36], 8)
+            self.assertAlmostEqual(0.0007277601, u_structured.values[45, 35], 8)
+            self.assertAlmostEqual(0.0007683263, u_structured.values[46, 36], 8)
 
             u_common = dataset["u_common"]
-            self.assertAlmostEqual(0.006376967, u_common.values[55, 35], 8)
-            self.assertAlmostEqual(0.0064066863, u_common.values[56, 36], 8)
+            self.assertAlmostEqual(0.00075336185, u_common.values[55, 35], 8)
+            self.assertAlmostEqual(0.0006663381, u_common.values[56, 36], 8)
 
             retrieval = dataset["MW_UTH"]
-            self.assertAlmostEqual(-2.0444, retrieval.values[46, 36], 8)
-            self.assertAlmostEqual(-2.0773, retrieval.values[47, 37], 8)
+            self.assertAlmostEqual(0.12945784138444968, retrieval.values[46, 36], 8)
+            self.assertAlmostEqual(0.12526797955225227, retrieval.values[47, 37], 8)
         finally:
             dataset.close()

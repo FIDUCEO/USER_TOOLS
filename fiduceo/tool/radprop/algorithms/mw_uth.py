@@ -1,3 +1,4 @@
+import numpy as np
 from numba import jit
 from xarray import Variable
 
@@ -21,4 +22,4 @@ class MwUTH:
 
 @jit('float64[:, :](float64[:, :])', nopython=True)
 def process_uth(ch3_bt):
-    return 16.5 + ch3_bt * (-0.07)
+    return np.exp(16.5 + ch3_bt * (-0.07))
