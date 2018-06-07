@@ -97,8 +97,8 @@ class RadPropProcessor():
         rci = row_subset[:, index_array]
         return rci
 
-    def _extract_uncertainties(self, dataset, channel_names):
-        # @todo 2 tb/tb write tests 2018-06-07
+    @staticmethod
+    def _extract_uncertainties(dataset, channel_names):
         width = dataset.dims["x"]
         height = dataset.dims["y"]
         u_ind = np.full([len(channel_names), height, width], 0.0, np.float64)

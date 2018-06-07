@@ -15,9 +15,9 @@ class MwUTH:
     def process(self, dataset):
         ch3_variable = dataset["Ch3_BT"]
 
-        ln_uth = process_uth(ch3_variable.values)
+        uth = process_uth(ch3_variable.values)
 
-        return Variable(ch3_variable.dims, ln_uth)
+        return Variable(ch3_variable.dims, uth)
 
 
 @jit('float64[:, :](float64[:, :])', nopython=True)

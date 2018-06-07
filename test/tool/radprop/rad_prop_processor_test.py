@@ -224,3 +224,93 @@ class RadPropProcessorTest(unittest.TestCase):
         self.assertAlmostEqual(0.0, rcu[0, 2], 8)
         self.assertAlmostEqual(0.0, rcu[1, 2], 8)
         self.assertAlmostEqual(1.0, rcu[2, 2], 8)
+
+    def test_extract_uncertainties_no_matching_channels(self):
+        dataset = xr.Dataset()
+
+        u_indep_ch1 = np.array([[0.11, 0.12, 0.13, 0.14], [0.21, 0.22, 0.33, 0.44], [0.31, 0.32, 0.33, 0.43], [0.41, 0.42, 0.43, 0.44]], dtype=np.float64)
+        dataset["u_independent_ch1"] = Variable(["y", "x"], u_indep_ch1)
+
+        channel_indices = dict([("ch2", 1), ("ch3", 2)])
+
+        u_ind, u_str, u_com = RadPropProcessor._extract_uncertainties(dataset, channel_indices)
+        self.assertEqual((2, 4, 4), u_ind.shape)
+        self.assertAlmostEqual(0.0, u_ind[0, 0, 0])
+        self.assertAlmostEqual(0.0, u_ind[0, 0, 1])
+
+        self.assertEqual((2, 4, 4), u_str.shape)
+        self.assertAlmostEqual(0.0, u_str[0, 0, 2])
+        self.assertAlmostEqual(0.0, u_str[0, 0, 3])
+
+        self.assertEqual((2, 4, 4), u_com.shape)
+        self.assertAlmostEqual(0.0, u_com[0, 1, 0])
+        self.assertAlmostEqual(0.0, u_com[0, 1, 2])
+
+    def test_extract_uncertainties_one_matching_uncertainty(self):
+        dataset = xr.Dataset()
+
+        u_indep_ch1 = np.array([[0.11, 0.12, 0.13, 0.14], [0.21, 0.22, 0.33, 0.44], [0.31, 0.32, 0.33, 0.43], [0.41, 0.42, 0.43, 0.44]], dtype=np.float64)
+        dataset["u_independent_ch1"] = Variable(["y", "x"], u_indep_ch1)
+
+        channel_indices = dict([("ch1", 1), ("ch3", 2), ("ch4", 3)])
+
+        u_ind, u_str, u_com = RadPropProcessor._extract_uncertainties(dataset, channel_indices)
+        self.assertEqual((3, 4, 4), u_ind.shape)
+        self.assertAlmostEqual(0.11, u_ind[0, 0, 0])
+        self.assertAlmostEqual(0.12, u_ind[0, 0, 1])
+        self.assertAlmostEqual(0.0, u_ind[1, 0, 0])
+        self.assertAlmostEqual(0.0, u_ind[2, 0, 0])
+
+        self.assertEqual((3, 4, 4), u_str.shape)
+        self.assertAlmostEqual(0.0, u_str[0, 0, 2])
+        self.assertAlmostEqual(0.0, u_str[1, 0, 3])
+        self.assertAlmostEqual(0.0, u_str[2, 0, 0])
+
+        self.assertEqual((3, 4, 4), u_com.shape)
+        self.assertAlmostEqual(0.0, u_com[0, 1, 0])
+        self.assertAlmostEqual(0.0, u_com[1, 1, 2])
+        self.assertAlmostEqual(0.0, u_com[2, 1, 2])
+
+
+    def test_extract_uncertainties_two_channels_matching_uncertainties(self):
+        dataset = xr.Dataset()
+
+        u_indep_ch1 = np.array([[0.11, 0.12, 0.13, 0.14], [0.21, 0.22, 0.33, 0.44], [0.31, 0.32, 0.33, 0.43], [0.41, 0.42, 0.43, 0.44]], dtype=np.float64)
+        dataset["u_independent_ch1"] = Variable(["y", "x"], u_indep_ch1)
+
+        u_str_ch1 = np.array([[0.21, 0.22, 0.33, 0.44], [0.31, 0.32, 0.33, 0.34], [0.41, 0.42, 0.43, 0.44], [0.51, 0.52, 0.53, 0.54]], dtype=np.float64)
+        dataset["u_structured_ch1"] = Variable(["y", "x"], u_str_ch1)
+
+        u_com_ch1 = np.array([[0.31, 0.32, 0.33, 0.34], [0.41, 0.42, 0.43, 0.44], [0.51, 0.52, 0.53, 0.54], [0.61, 0.62, 0.63, 0.64]], dtype=np.float64)
+        dataset["u_common_ch1"] = Variable(["y", "x"], u_com_ch1)
+
+        u_indep_ch3 = np.array([[1.11, 1.12, 1.13, 1.14], [1.21, 1.22, 1.33, 1.44], [1.31, 1.32, 1.33, 1.43], [1.41, 1.42, 1.43, 1.44]], dtype=np.float64)
+        dataset["u_independent_ch3"] = Variable(["y", "x"], u_indep_ch3)
+
+        u_str_ch3 = np.array([[2.21, 2.22, 2.33, 2.44], [2.31, 2.32, 2.33, 2.34], [2.41, 2.42, 2.43, 2.44], [2.51, 2.52, 2.53, 2.54]], dtype=np.float64)
+        dataset["u_structured_ch3"] = Variable(["y", "x"], u_str_ch3)
+
+        u_com_ch3 = np.array([[3.31, 3.32, 3.33, 3.34], [3.41, 3.42, 3.43, 3.44], [3.51, 3.52, 3.53, 3.54], [3.61, 3.62, 3.63, 3.64]], dtype=np.float64)
+        dataset["u_common_ch3"] = Variable(["y", "x"], u_com_ch3)
+
+        channel_indices = dict([("ch1", 1), ("ch3", 2)])
+
+        u_ind, u_str, u_com = RadPropProcessor._extract_uncertainties(dataset, channel_indices)
+        self.assertEqual((2, 4, 4), u_ind.shape)
+        self.assertAlmostEqual(0.11, u_ind[0, 0, 0])
+        self.assertAlmostEqual(0.12, u_ind[0, 0, 1])
+        self.assertAlmostEqual(1.11, u_ind[1, 0, 0])
+        self.assertAlmostEqual(1.12, u_ind[1, 0, 1])
+
+        self.assertEqual((2, 4, 4), u_str.shape)
+        self.assertAlmostEqual(0.33, u_str[0, 0, 2])
+        self.assertAlmostEqual(0.44, u_str[0, 0, 3])
+        self.assertAlmostEqual(2.33, u_str[1, 0, 2])
+        self.assertAlmostEqual(2.44, u_str[1, 0, 3])
+
+        self.assertEqual((2, 4, 4), u_com.shape)
+        self.assertAlmostEqual(0.41, u_com[0, 1, 0])
+        self.assertAlmostEqual(0.42, u_com[0, 1, 1])
+        self.assertAlmostEqual(3.43, u_com[1, 1, 2])
+        self.assertAlmostEqual(3.41, u_com[1, 1, 0])
+
