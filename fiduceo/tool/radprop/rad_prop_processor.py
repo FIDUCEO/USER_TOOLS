@@ -37,13 +37,13 @@ class RadPropProcessor():
         sensitivities = self.sensitivity_calculator.run(dataset, disturbances, algorithm)
 
         rci, rcs, rcu = self._subset_correlation_matrices(dataset, channel_indices)
-        u_ind, u_str = self._extract_uncertainties(dataset, channel_indices)
+        u_ind, u_str, u_com = self._extract_uncertainties(dataset, channel_indices)
 
         width = dataset.dims["x"]
         height = dataset.dims["y"]
 
         start_time = time.time()
-        uncertainties = calculate_uncertainty_components(width, height, rci, rcs, u_ind, u_str, sensitivities)
+        uncertainties = calculate_uncertainty_components(width, height, rci, rcs, rcu, u_ind, u_str, u_com, sensitivities)
         print("--- %s seconds ---" % (time.time() - start_time))
 
         target_variable = algorithm.process(dataset)
@@ -53,6 +53,7 @@ class RadPropProcessor():
         target_dataset["u_total"] = Variable(["y", "x"], uncertainties[0, :, :])
         target_dataset["u_independent"] = Variable(["y", "x"], uncertainties[1, :, :])
         target_dataset["u_structured"] = Variable(["y", "x"], uncertainties[2, :, :])
+        target_dataset["u_common"] = Variable(["y", "x"], uncertainties[3, :, :])
 
         self._write_result(cmd_line_args, target_dataset)
 
@@ -97,21 +98,30 @@ class RadPropProcessor():
         return rci
 
     def _extract_uncertainties(self, dataset, channel_names):
+        # @todo 2 tb/tb write tests 2018-06-07
         width = dataset.dims["x"]
         height = dataset.dims["y"]
-        u_ind = np.full([len(channel_names), height, width], np.nan, np.float64)
-        u_str = np.full([len(channel_names), height, width], np.nan, np.float64)
+        u_ind = np.full([len(channel_names), height, width], 0.0, np.float64)
+        u_str = np.full([len(channel_names), height, width], 0.0, np.float64)
+        u_com = np.full([len(channel_names), height, width], 0.0, np.float64)
 
         index = 0
         for name, chanel_index in channel_names.items():
             u_ind_name = "u_independent_" + name
-            u_ind[index, :, :] = dataset[u_ind_name].data
+            if u_ind_name in dataset:
+                u_ind[index, :, :] = dataset[u_ind_name].data
 
             u_str_name = "u_structured_" + name
-            u_str[index, :, :] = dataset[u_str_name].data
+            if u_str_name in dataset:
+                u_str[index, :, :] = dataset[u_str_name].data
+
+            u_com_name = "u_common_" + name
+            if u_com_name in dataset:
+                u_com[index, :, :] = dataset[u_com_name].data
+
             index += 1
 
-        return u_ind, u_str
+        return u_ind, u_str, u_com
 
     @staticmethod
     def _extract_channel_indices(dataset, variable_names):
@@ -172,9 +182,9 @@ def calculate_covariances(uncertainty_vector, correlation_matrix):
     return covariance_matrix
 
 
-@jit('float32(float64[:], float64[:, :], float64[:, :])', nopython=True)
-def calculate_total_uncertainty(c, sci, scs):
-    u_total_sq = np.dot(c, (sci + scs))
+@jit('float32(float64[:], float64[:, :], float64[:, :], float64[:, :])', nopython=True)
+def calculate_total_uncertainty(c, sci, scs, scu):
+    u_total_sq = np.dot(c, (sci + scs + scu))
     u_total_sq = np.dot(u_total_sq, c)
     return np.sqrt(u_total_sq)
 
@@ -201,32 +211,34 @@ def create_float_array_3D(width, height, layers):
     return np.zeros((la_64, he_64, wi_64), dtype=np.float32)
 
 
-@jit('float32[:, :, :](int32, int32, float64[:,:], float64[:,:], float64[:,:,:], float64[:,:,:], float64[:,:,:])', nopython=True, parallel=True)
-def calculate_uncertainty_components(width, height, rci, rcs, u_ind, u_str, sensitivities):
+@jit('float32[:, :, :](int32, int32, float64[:,:], float64[:,:], float64[:,:], float64[:,:,:], float64[:,:,:], float64[:,:,:], float64[:,:,:])', nopython=True, parallel=True)
+def calculate_uncertainty_components(width, height, rci, rcs, rcu, u_ind, u_str, u_com, sensitivities):
     u = create_float_array(width, height)
     u_i = create_float_array(width, height)
     u_s = create_float_array(width, height)
+    u_c = create_float_array(width, height)
 
     for y in prange(0, height):
         for x in prange(0, width):
             u_ind_pixel = u_ind[:, y, x]
-
             sci = calculate_covariances(u_ind_pixel, rci)
 
             u_str_pixel = u_str[:, y, x]
             scs = calculate_covariances(u_str_pixel, rcs)
 
-            # not for now tb 2018-04-11
-            # @todo calculate Sch = Uch + UchT
+            u_com_pixel = u_com[:, y, x]
+            scu = calculate_covariances(u_com_pixel, rcu)
 
             c = sensitivities[:, y, x]
 
-            u[y, x] = calculate_total_uncertainty(c, sci, scs)
+            u[y, x] = calculate_total_uncertainty(c, sci, scs, scu)
             u_i[y, x] = calculate_uncertainty(c, sci)
             u_s[y, x] = calculate_uncertainty(c, scs)
+            u_c[y, x] = calculate_uncertainty(c, scu)
 
-    result = create_float_array_3D(width, height, 3)
+    result = create_float_array_3D(width, height, 4)
     result[0, :, :] = u
     result[1, :, :] = u_i
     result[2, :, :] = u_s
+    result[3, :, :] = u_c
     return result

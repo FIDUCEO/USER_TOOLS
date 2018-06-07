@@ -109,17 +109,19 @@ class RadPropProcessorTest(unittest.TestCase):
         uncertainty_px = np.array([0.34, 0.076], dtype=np.float64)
         cov_i = np.array([[0.978, 0.0], [0.0, 0.965]], dtype=np.float64)
         cov_s = np.array([[0.235, 0.0], [0.0, 0.567]], dtype=np.float64)
+        cov_u = np.array([[0.132, 0.0], [0.0, 0.253]], dtype=np.float64)
 
-        uncertainty = calculate_total_uncertainty(uncertainty_px, cov_i, cov_s)
-        self.assertAlmostEqual(0.3860979676246643, uncertainty, 7)
+        uncertainty = calculate_total_uncertainty(uncertainty_px, cov_i, cov_s, cov_u)
+        self.assertAlmostEqual(0.40717583894729614, uncertainty, 7)
 
     def test_calculate_total_uncertainty_3channel_correlated(self):
         uncertainty_px = np.array([0.34, 0.076, 0.208], dtype=np.float64)
         cov_i = np.array([[0.978, 0.1, 0.1], [0.1, 0.895, 0.1], [0.1, 0.1, 0.965]], dtype=np.float64)
         cov_s = np.array([[0.235, 0.1, 0.1], [0.1, 0.567, 0.1], [0.1, 0.1, 0.884]], dtype=np.float64)
+        cov_u = np.array([[0., 0.1, 0.1], [0.1, 0.3, 0.1], [0.1, 0.1, 0.4]], dtype=np.float64)
 
-        uncertainty = calculate_total_uncertainty(uncertainty_px, cov_i, cov_s)
-        self.assertAlmostEqual(0.5230770707130432, uncertainty, 7)
+        uncertainty = calculate_total_uncertainty(uncertainty_px, cov_i, cov_s, cov_u)
+        self.assertAlmostEqual(0.5613569617271423, uncertainty, 7)
 
     def test_create_float_array(self):
         float_array = create_float_array(21, 76)
